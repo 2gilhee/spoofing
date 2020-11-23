@@ -39,17 +39,6 @@ int hackARP(char* device, uint8_t* server_ip, uint8_t* victim_ip) {
   char err_buf[PCAP_ERRBUF_SIZE];
   pcap_t *pcd;
 
-  // cout << device << endl;
-  // char* device = device_name;
-
-  // // Change the mac address of this ip address(sourceIP) to your mac address.
-  // uint8_t server_ip[4];
-  // atoiIP(svr_ip, server_ip);
-  //
-  // // victim IP Address
-  // uint8_t victim_ip[4];
-  // atoiIP(vctm_ip, victim_ip);
-
   // get the attacker mac
   uint8_t attacker_mac[6];
   getAttackerMAC(attacker_mac, device);
