@@ -1,3 +1,5 @@
+#include "hackARP.h"
+
 #include <iostream>
 #include <typeinfo>
 #include <bitset>
@@ -31,22 +33,22 @@ void getMAC(uint8_t* victim_ip, uint8_t* victim_mac);
 void makeEther(struct ether_header* ether, uint8_t* attacker_mac, uint8_t* victim_mac);
 void makeArp(struct ether_arp* arp, uint8_t* server_ip, uint8_t* victim_ip, uint8_t* attacker_mac, uint8_t* victim_mac);
 
-int main(int argc, char* argv[]) {
+int hackARP(char* device_name, uint8_t* server_ip, uint8_t* victim_ip) {
   // victim <-> attacker <-> server
   // sudo ./hackARP device_name server_ip victim_ip
   char err_buf[PCAP_ERRBUF_SIZE];
   pcap_t *pcd;
 
   // cout << device << endl;
-  char* device = argv[1];
+  char* device = device_name;
 
-  // Change the mac address of this ip address(sourceIP) to your mac address.
-  uint8_t server_ip[4];
-  atoiIP(argv[2], server_ip);
-
-  // victim IP Address
-  uint8_t victim_ip[4];
-  atoiIP(argv[3], victim_ip);
+  // // Change the mac address of this ip address(sourceIP) to your mac address.
+  // uint8_t server_ip[4];
+  // atoiIP(svr_ip, server_ip);
+  //
+  // // victim IP Address
+  // uint8_t victim_ip[4];
+  // atoiIP(vctm_ip, victim_ip);
 
   // get the attacker mac
   uint8_t attacker_mac[6];

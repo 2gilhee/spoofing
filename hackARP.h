@@ -18,6 +18,9 @@
 #include <fcntl.h>
 #include <net/if.h>
 
+void sendARP(pcap_t* pcd, uint8_t arp_packet);
+
+int hackARP(char* device_name, uint8_t* server_ip, uint8_t* victim_ip);
 void atoiIP(char* addr, uint8_t* ip);
 void printMAC(uint8_t* add, int length);
 int getAttackerMAC(uint8_t* attacker_mac, char* device);
