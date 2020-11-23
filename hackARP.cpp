@@ -33,14 +33,14 @@ void getMAC(uint8_t* victim_ip, uint8_t* victim_mac);
 void makeEther(struct ether_header* ether, uint8_t* attacker_mac, uint8_t* victim_mac);
 void makeArp(struct ether_arp* arp, uint8_t* server_ip, uint8_t* victim_ip, uint8_t* attacker_mac, uint8_t* victim_mac);
 
-int hackARP(char* device_name, uint8_t* server_ip, uint8_t* victim_ip) {
+int hackARP(char* device, uint8_t* server_ip, uint8_t* victim_ip) {
   // victim <-> attacker <-> server
   // sudo ./hackARP device_name server_ip victim_ip
   char err_buf[PCAP_ERRBUF_SIZE];
   pcap_t *pcd;
 
   // cout << device << endl;
-  char* device = device_name;
+  // char* device = device_name;
 
   // // Change the mac address of this ip address(sourceIP) to your mac address.
   // uint8_t server_ip[4];

