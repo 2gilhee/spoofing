@@ -83,6 +83,7 @@ int main(int argc, char* argv[]) {
 
           // Check the IP header
           if(ntohs(ethHeader->ether_type) == ETHERTYPE_IP) {
+            cout << "it's ip packet" << endl;
             // Get IP header and lengths
             pkt += sizeof(struct ether_header);
             ipHeader = (struct ip*)pkt;
@@ -92,7 +93,10 @@ int main(int argc, char* argv[]) {
             sprintf(att_ip,"%d.%d.%d.%d", attacker_ip[0], attacker_ip[1], attacker_ip[2], attacker_ip[3]);
             sprintf(temp, "%s", inet_ntoa(ipHeader->ip_dst));
 
-            if(strcmp(temp, att_ip) == true) {
+            if(strcmp(temp, att_ip)) {
+              cout << temp << endl;
+              cout << att_ip << endl;
+              cout << "false" << endl;
               if(maccmp(ethHeader->ether_dhost, attacker_mac, 6) == true) {
 
                 pkt = (uint8_t*)pkt_data;
@@ -100,6 +104,7 @@ int main(int argc, char* argv[]) {
                 memcpy(pkt+6, attacker_mac, 6);
                 pcap_sendpacket(pcd, pkt, hdr->len);
                 cout << "send it!" << endl;
+                printLine();
               }
             }
           }
